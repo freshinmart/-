@@ -1,10 +1,11 @@
-<html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Buku Catatan Hutang - Sistem Gudang</title>
     <style>
+        /* CSS yang sama seperti sebelumnya */
         :root {
             --primary: #4a6fa5;
             --secondary: #6b8cbc;
@@ -452,8 +453,7 @@
         .product-item {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            padding: 12px;
+            padding: 10px;
             border-bottom: 1px solid #eee;
         }
         
@@ -604,27 +604,39 @@
             color: var(--success);
         }
 
-        /* CSS untuk kontrol quantity */
+        /* Styling untuk quantity */
         .quantity-controls {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 5px;
         }
-
-        .quantity-display {
+        
+        .quantity-btn {
+            width: 25px;
+            height: 25px;
+            padding: 0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .quantity-value {
             min-width: 30px;
             text-align: center;
-            font-weight: 500;
+            font-weight: bold;
         }
-
-        .product-info {
-            flex: 1;
+        
+        .product-details {
+            display: flex;
+            flex-direction: column;
         }
-
-        .product-quantity-total {
-            min-width: 100px;
-            text-align: right;
-            font-weight: 500;
+        
+        .product-subtotal {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-top: 2px;
         }
         
         @media (max-width: 768px) {
@@ -687,11 +699,6 @@
             
             .barcode-scanner-video {
                 height: 250px;
-            }
-
-            .quantity-controls {
-                flex-direction: column;
-                gap: 5px;
             }
         }
     </style>
@@ -911,7 +918,7 @@
         let warehouseProducts = JSON.parse(localStorage.getItem('warehouseProducts')) || [];
         const PASSWORD = '131313';
         
-        // Variabel untuk produk - struktur baru dengan quantity
+        // Variabel untuk produk
         let products = [];
         
         // Variabel untuk scanner
@@ -981,7 +988,7 @@
             });
         }
         
-        // Hitung total harga produk dengan quantity
+        // Hitung total harga produk
         function calculateTotal(products) {
             return products.reduce((total, product) => total + (product.price * product.quantity), 0);
         }
@@ -993,8 +1000,8 @@
             return total;
         }
         
-        // Render daftar produk dengan quantity
-        function renderProductList(products, container, onRemove, onIncrease, onDecrease) {
+        // Render daftar produk
+        function renderProductList(products, container, onQuantityChange, onRemove) {
             container.innerHTML = '';
             
             if (products.length === 0) {
@@ -1006,69 +1013,58 @@
                 const productItem = document.createElement('div');
                 productItem.className = 'product-item';
                 productItem.innerHTML = `
-                    <div class="product-info">
+                    <div class="product-details">
                         <div>${product.name}</div>
-                        <div style="font-size: 0.9rem; color: #6c757d;">Rp ${formatCurrency(product.price)} per item</div>
+                        <div class="product-subtotal">
+                            Rp ${formatCurrency(product.price)} x ${product.quantity} = Rp ${formatCurrency(product.price * product.quantity)}
+                        </div>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 10px;">
+                    <div class="product-actions">
                         <div class="quantity-controls">
-                            <button type="button" class="btn-warning btn-icon decrease-quantity" data-index="${index}">-</button>
-                            <span class="quantity-display">${product.quantity}</span>
-                            <button type="button" class="btn-warning btn-icon increase-quantity" data-index="${index}">+</button>
+                            <button type="button" class="btn-warning quantity-btn" data-index="${index}" data-change="-1">-</button>
+                            <span class="quantity-value">${product.quantity}</span>
+                            <button type="button" class="btn-success quantity-btn" data-index="${index}" data-change="1">+</button>
                         </div>
-                        <div class="product-quantity-total">
-                            Rp ${formatCurrency(product.price * product.quantity)}
-                        </div>
-                        <button type="button" class="btn-danger btn-icon remove-product" data-index="${index}">×</button>
+                        <button type="button" class="btn-danger btn-icon" data-index="${index}">×</button>
                     </div>
                 `;
                 
                 container.appendChild(productItem);
                 
+                // Event listener untuk tombol quantity
+                const quantityBtns = productItem.querySelectorAll('.quantity-btn');
+                quantityBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const change = parseInt(this.getAttribute('data-change'));
+                        onQuantityChange(index, change);
+                    });
+                });
+                
                 // Event listener untuk tombol hapus
-                const removeBtn = productItem.querySelector('.remove-product');
+                const removeBtn = productItem.querySelector('.btn-danger');
                 removeBtn.addEventListener('click', function() {
                     onRemove(index);
-                });
-                
-                // Event listener untuk tombol tambah quantity
-                const increaseBtn = productItem.querySelector('.increase-quantity');
-                increaseBtn.addEventListener('click', function() {
-                    onIncrease(index);
-                });
-                
-                // Event listener untuk tombol kurang quantity
-                const decreaseBtn = productItem.querySelector('.decrease-quantity');
-                decreaseBtn.addEventListener('click', function() {
-                    onDecrease(index);
                 });
             });
         }
         
-        // Fungsi untuk menambah quantity
-        function increaseQuantity(index) {
-            products[index].quantity += 1;
-            renderProductList(products, productList, removeProduct, increaseQuantity, decreaseQuantity);
-            updateTotal(products, totalAmountSpan);
-        }
-        
-        // Fungsi untuk mengurangi quantity
-        function decreaseQuantity(index) {
-            if (products[index].quantity > 1) {
-                products[index].quantity -= 1;
-            } else {
-                // Jika quantity 1, maka hapus produk
-                removeProduct(index);
-                return;
+        // Ubah quantity produk
+        function changeProductQuantity(index, change) {
+            products[index].quantity += change;
+            
+            // Pastikan quantity minimal 1
+            if (products[index].quantity < 1) {
+                products[index].quantity = 1;
             }
-            renderProductList(products, productList, removeProduct, increaseQuantity, decreaseQuantity);
+            
+            renderProductList(products, productList, changeProductQuantity, removeProduct);
             updateTotal(products, totalAmountSpan);
         }
         
         // Hapus produk
         function removeProduct(index) {
             products.splice(index, 1);
-            renderProductList(products, productList, removeProduct, increaseQuantity, decreaseQuantity);
+            renderProductList(products, productList, changeProductQuantity, removeProduct);
             updateTotal(products, totalAmountSpan);
         }
         
@@ -1096,7 +1092,7 @@
             });
             
             // Render daftar produk awal
-            renderProductList(products, productList, removeProduct, increaseQuantity, decreaseQuantity);
+            renderProductList(products, productList, changeProductQuantity, removeProduct);
             updateTotal(products, totalAmountSpan);
             
             // Render daftar produk gudang
@@ -1447,9 +1443,10 @@
                             // Cek apakah produk sudah ada di daftar
                             const existingProductIndex = products.findIndex(p => p.barcode === code);
                             
-                            if (existingProductIndex !== -1) {
-                                // Jika produk sudah ada, tambah quantity
+                            if (existingProductIndex >= 0) {
+                                // Jika produk sudah ada, tambahkan quantity
                                 products[existingProductIndex].quantity += 1;
+                                scanStatus.textContent = `Menambah quantity: ${product.name}`;
                             } else {
                                 // Jika produk belum ada, tambahkan produk baru
                                 products.push({
@@ -1458,12 +1455,12 @@
                                     quantity: 1,
                                     barcode: code
                                 });
+                                scanStatus.textContent = `Berhasil menambahkan: ${product.name}`;
                             }
                             
-                            renderProductList(products, productList, removeProduct, increaseQuantity, decreaseQuantity);
+                            renderProductList(products, productList, changeProductQuantity, removeProduct);
                             updateTotal(products, totalAmountSpan);
                             
-                            scanStatus.textContent = `Berhasil ${existingProductIndex !== -1 ? 'menambah quantity' : 'menambahkan'}: ${product.name}`;
                             scanStatus.className = 'scan-status scan-success';
                             
                             // Reset status setelah 3 detik
@@ -1560,7 +1557,7 @@
             // Reset form
             debtForm.reset();
             products = [];
-            renderProductList(products, productList, removeProduct, increaseQuantity, decreaseQuantity);
+            renderProductList(products, productList, changeProductQuantity, removeProduct);
             updateTotal(products, totalAmountSpan);
             
             // Set tanggal default
@@ -1641,7 +1638,7 @@
                                     <div class="debt-date">Tanggal: ${debt.debtDate} ${debt.dueDate ? `| Jatuh Tempo: ${debt.dueDate}` : ''}</div>
                                     <div class="product-details" style="margin-top: 5px; font-size: 0.85rem; color: #6c757d;">
                                         ${debt.products.map(product => `
-                                            <div>• ${product.name} - ${product.quantity} pcs - Rp ${formatCurrency(product.price * product.quantity)}</div>
+                                            <div>• ${product.name} (${product.quantity} x Rp ${formatCurrency(product.price)}) - Rp ${formatCurrency(product.price * product.quantity)}</div>
                                         `).join('')}
                                     </div>
                                 </div>
@@ -1851,7 +1848,7 @@
                             <tr>
                                 <td style="border: 1px solid #ddd; padding: 8px;">${index + 1}</td>
                                 <td style="border: 1px solid #ddd; padding: 8px;">
-                                    ${debt.products.map(product => `${product.name} (${product.quantity} pcs - Rp ${formatCurrency(product.price * product.quantity)})`).join('<br>')}
+                                    ${debt.products.map(product => `${product.name} (${product.quantity} x Rp ${formatCurrency(product.price)})`).join('<br>')}
                                 </td>
                                 <td style="border: 1px solid #ddd; padding: 8px;">${debt.debtDate}</td>
                                 <td style="border: 1px solid #ddd; padding: 8px;">Rp ${formatCurrency(debt.debtAmount)}</td>
@@ -1934,7 +1931,7 @@
                             <tr>
                                 <td style="border: 1px solid #ddd; padding: 8px;">${index + 1}</td>
                                 <td style="border: 1px solid #ddd; padding: 8px;">
-                                    ${debt.products.map(product => product.name).join(', ')}
+                                    ${debt.products.map(product => `${product.name} (${product.quantity} x Rp ${formatCurrency(product.price)})`).join('<br>')}
                                 </td>
                                 <td style="border: 1px solid #ddd; padding: 8px;">${debt.dueDate || 'Tidak ditentukan'}</td>
                                 <td style="border: 1px solid #ddd; padding: 8px;">Rp ${formatCurrency(debt.debtAmount)}</td>
