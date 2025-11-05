@@ -553,9 +553,54 @@
         .barcode-scanner-video {
             width: 100%;
             max-width: 400px;
-            height: auto;
+            height: 300px;
             border-radius: 4px;
             background-color: #000;
+            object-fit: cover;
+        }
+        
+        .scanner-overlay {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .scanner-frame {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            height: 150px;
+            border: 2px solid #00ff00;
+            box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.5);
+            z-index: 1;
+        }
+        
+        .scanner-guide {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            text-align: center;
+            z-index: 2;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+        }
+        
+        .scanner-result {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            text-align: center;
+        }
+        
+        .barcode-value {
+            font-family: monospace;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--success);
         }
         
         @media (max-width: 768px) {
@@ -615,6 +660,10 @@
             .add-product-btn {
                 width: 100%;
             }
+            
+            .barcode-scanner-video {
+                height: 250px;
+            }
         }
     </style>
     <!-- QuaggaJS for barcode scanning -->
@@ -649,12 +698,19 @@
                             <p>Klik untuk membuka kamera dan scan kode batang</p>
                             <button type="button" id="start-barcode-scanner" class="btn-warning">Mulai Scan</button>
                             <div class="camera-container" style="display:none;" id="barcode-camera-container">
-                                <div id="barcode-scanner-interactive" class="barcode-scanner-video"></div>
+                                <div class="scanner-overlay">
+                                    <video id="barcode-scanner-video" class="barcode-scanner-video" autoplay playsinline></video>
+                                    <div class="scanner-frame"></div>
+                                    <div class="scanner-guide">Arahkan kode batang ke dalam area ini</div>
+                                </div>
                             </div>
                             <div class="camera-controls" id="barcode-camera-controls" style="display:none;">
                                 <button type="button" id="stop-barcode-scanner" class="btn-danger">Stop Scan</button>
                             </div>
                             <div id="scan-status" class="scan-status" style="display:none;"></div>
+                            <div id="scanner-result" class="scanner-result" style="display:none;">
+                                <p>Kode Batang: <span id="scanned-barcode" class="barcode-value"></span></p>
+                            </div>
                         </div>
                     </div>
                     
@@ -755,21 +811,6 @@
                             <label for="debtor-nik">NIK</label>
                             <input type="text" id="debtor-nik" placeholder="Nomor Induk Kependudukan">
                         </div>
-                        <div class="form-group">
-                            <label>Tanda Tangan Peminjam</label>
-                            <div class="signature-options">
-                                <div class="signature-option">
-                                    <button type="button" id="debtor-capture-btn" class="btn-warning">Ambil Foto TTD</button>
-                                </div>
-                                <div class="signature-option">
-                                    <div class="signature-container" id="debtor-signature-dropzone">
-                                        <p>Seret file TTD ke sini atau klik untuk memilih</p>
-                                        <input type="file" id="debtor-signature-upload" accept="image/*" style="display: none;">
-                                        <img id="debtor-signature-preview" class="signature-preview" src="" alt="Tanda Tangan Peminjam">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                     
                     <div class="document-form-section">
@@ -785,21 +826,6 @@
                         <div class="form-group">
                             <label for="lender-nik">NIK</label>
                             <input type="text" id="lender-nik" placeholder="Nomor Induk Kependudukan">
-                        </div>
-                        <div class="form-group">
-                            <label>Tanda Tangan Pemberi Pinjaman</label>
-                            <div class="signature-options">
-                                <div class="signature-option">
-                                    <button type="button" id="lender-capture-btn" class="btn-warning">Ambil Foto TTD</button>
-                                </div>
-                                <div class="signature-option">
-                                    <div class="signature-container" id="lender-signature-dropzone">
-                                        <p>Seret file TTD ke sini atau klik untuk memilih</p>
-                                        <input type="file" id="lender-signature-upload" accept="image/*" style="display: none;">
-                                        <img id="lender-signature-preview" class="signature-preview" src="" alt="Tanda Tangan Pemberi Pinjaman">
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -828,13 +854,17 @@
             </div>
             <div class="form-group">
                 <div class="camera-container">
-                    <div id="barcode-scanner-modal" class="barcode-scanner-video"></div>
+                    <div class="scanner-overlay">
+                        <video id="barcode-scanner-modal-video" class="barcode-scanner-video" autoplay playsinline></video>
+                        <div class="scanner-frame"></div>
+                        <div class="scanner-guide">Arahkan kode batang ke dalam area ini</div>
+                    </div>
                 </div>
                 <div class="camera-controls">
                     <button id="stop-barcode-modal" class="btn-danger">Stop Scan</button>
                 </div>
-                <div id="barcode-result" style="margin-top: 15px; padding: 10px; background-color: #f8f9fa; border-radius: 4px; display: none;">
-                    <p>Kode Batang: <span id="barcode-value"></span></p>
+                <div id="barcode-modal-result" class="scanner-result" style="display:none;">
+                    <p>Kode Batang: <span id="barcode-modal-value" class="barcode-value"></span></p>
                 </div>
             </div>
         </div>
@@ -854,12 +884,12 @@
         
         // Variabel untuk produk
         let products = [];
-        let editProducts = [];
         
         // Variabel untuk scanner
         let barcodeScannerActive = false;
         let barcodeScannerInstance = null;
         let barcodeModalScannerInstance = null;
+        let currentStream = null;
         
         // Elemen DOM
         const debtForm = document.getElementById('debt-form');
@@ -889,15 +919,17 @@
         const startBarcodeScannerBtn = document.getElementById('start-barcode-scanner');
         const stopBarcodeScannerBtn = document.getElementById('stop-barcode-scanner');
         const barcodeCameraContainer = document.getElementById('barcode-camera-container');
-        const barcodeScannerInteractive = document.getElementById('barcode-scanner-interactive');
+        const barcodeScannerVideo = document.getElementById('barcode-scanner-video');
         const scanStatus = document.getElementById('scan-status');
+        const scannerResult = document.getElementById('scanner-result');
+        const scannedBarcode = document.getElementById('scanned-barcode');
         
         // Elemen untuk modal barcode
         const barcodeModal = document.getElementById('barcode-modal');
-        const barcodeScannerModal = document.getElementById('barcode-scanner-modal');
+        const barcodeScannerModalVideo = document.getElementById('barcode-scanner-modal-video');
         const stopBarcodeModalBtn = document.getElementById('stop-barcode-modal');
-        const barcodeResult = document.getElementById('barcode-result');
-        const barcodeValue = document.getElementById('barcode-value');
+        const barcodeModalResult = document.getElementById('barcode-modal-result');
+        const barcodeModalValue = document.getElementById('barcode-modal-value');
         
         // Format mata uang
         function formatCurrency(value) {
@@ -968,7 +1000,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             renderDebtors();
             populateDebtorSelect();
-            formatCurrencyInput(productPriceWarehouse); // Format input harga di gudang
+            formatCurrencyInput(productPriceWarehouse);
             
             // Set tanggal default
             const today = new Date().toISOString().split('T')[0];
@@ -1139,75 +1171,105 @@
         function closeBarcodeModal() {
             barcodeModal.style.display = 'none';
             stopBarcodeModalScanner();
-            barcodeResult.style.display = 'none';
+            barcodeModalResult.style.display = 'none';
+        }
+        
+        // Fungsi untuk menghentikan kamera
+        function stopCameraStream() {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+                currentStream = null;
+            }
         }
         
         // Fungsi untuk memulai scanner barcode di modal
-        function startBarcodeModalScanner() {
-            // Hentikan scanner sebelumnya jika ada
-            if (barcodeModalScannerInstance) {
-                Quagga.stop();
-            }
-            
-            Quagga.init({
-                inputStream: {
-                    name: "Live",
-                    type: "LiveStream",
-                    target: barcodeScannerModal,
-                    constraints: {
-                        width: 640,
-                        height: 480,
-                        facingMode: "environment" // Gunakan kamera belakang jika tersedia
-                    }
-                },
-                decoder: {
-                    readers: [
-                        "code_128_reader",
-                        "ean_reader",
-                        "ean_8_reader",
-                        "code_39_reader",
-                        "upc_reader",
-                        "upc_e_reader"
-                    ]
-                },
-                locator: {
-                    patchSize: "medium",
-                    halfSample: true
-                },
-                locate: true,
-                numOfWorkers: 4
-            }, function(err) {
-                if (err) {
-                    console.error('Error initializing Quagga:', err);
-                    scanStatus.textContent = 'Error: Tidak dapat mengakses kamera';
-                    scanStatus.className = 'scan-status scan-error';
-                    return;
+        async function startBarcodeModalScanner() {
+            try {
+                // Hentikan scanner sebelumnya jika ada
+                if (barcodeModalScannerInstance) {
+                    barcodeModalScannerInstance.stop();
                 }
-                console.log('Quagga initialized successfully');
-                Quagga.start();
-                barcodeModalScannerInstance = Quagga;
-            });
-            
-            Quagga.onDetected(function(result) {
-                const code = result.codeResult.code;
-                barcodeValue.textContent = code;
-                barcodeResult.style.display = 'block';
                 
-                // Isi field barcode dengan hasil scan
-                productBarcodeWarehouse.value = code;
+                // Hentikan kamera sebelumnya
+                stopCameraStream();
                 
-                // Tampilkan preview
-                barcodePreviewWarehouse.innerHTML = `
-                    <div style="text-align: center; margin-top: 10px;">
-                        <div class="product-barcode" style="font-size: 1.2rem; padding: 10px; display: inline-block;">${code}</div>
-                    </div>
-                `;
+                // Dapatkan akses ke kamera
+                currentStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: "environment",
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    } 
+                });
                 
-                // Otomatis tutup modal setelah 2 detik
-                setTimeout(() => {
-                    closeBarcodeModal();
-                }, 2000);
-            });
+                barcodeScannerModalVideo.srcObject = currentStream;
+                
+                // Tunggu hingga video siap
+                barcodeScannerModalVideo.onloadedmetadata = function() {
+                    // Inisialisasi Quagga setelah video siap
+                    Quagga.init({
+                        inputStream: {
+                            name: "Live",
+                            type: "LiveStream",
+                            target: barcodeScannerModalVideo,
+                            constraints: {
+                                width: 640,
+                                height: 480,
+                                facingMode: "environment"
+                            }
+                        },
+                        decoder: {
+                            readers: [
+                                "code_128_reader",
+                                "ean_reader",
+                                "ean_8_reader",
+                                "code_39_reader",
+                                "upc_reader",
+                                "upc_e_reader"
+                            ]
+                        },
+                        locator: {
+                            patchSize: "medium",
+                            halfSample: true
+                        },
+                        locate: true,
+                        numOfWorkers: 2
+                    }, function(err) {
+                        if (err) {
+                            console.error('Error initializing Quagga:', err);
+                            alert('Tidak dapat mengakses kamera. Pastikan Anda memberikan izin akses kamera.');
+                            return;
+                        }
+                        console.log('Quagga initialized successfully');
+                        Quagga.start();
+                        barcodeModalScannerInstance = Quagga;
+                    });
+                    
+                    Quagga.onDetected(function(result) {
+                        const code = result.codeResult.code;
+                        barcodeModalValue.textContent = code;
+                        barcodeModalResult.style.display = 'block';
+                        
+                        // Isi field barcode dengan hasil scan
+                        productBarcodeWarehouse.value = code;
+                        
+                        // Tampilkan preview
+                        barcodePreviewWarehouse.innerHTML = `
+                            <div style="text-align: center; margin-top: 10px;">
+                                <div class="product-barcode" style="font-size: 1.2rem; padding: 10px; display: inline-block;">${code}</div>
+                            </div>
+                        `;
+                        
+                        // Otomatis tutup modal setelah 2 detik
+                        setTimeout(() => {
+                            closeBarcodeModal();
+                        }, 2000);
+                    });
+                };
+            } catch (err) {
+                console.error('Error accessing camera:', err);
+                alert('Tidak dapat mengakses kamera. Pastikan Anda memberikan izin akses kamera.');
+            }
         }
         
         // Fungsi untuk menghentikan scanner barcode di modal
@@ -1216,102 +1278,135 @@
                 barcodeModalScannerInstance.stop();
                 barcodeModalScannerInstance = null;
             }
+            stopCameraStream();
         }
         
         // Fungsi untuk memulai scanner barcode di tab tambah hutang
-        function startBarcodeScanner() {
-            startBarcodeScannerBtn.style.display = 'none';
-            barcodeCameraContainer.style.display = 'block';
-            barcodeCameraControls.style.display = 'block';
-            scanStatus.style.display = 'block';
-            scanStatus.textContent = 'Mencari kode batang...';
-            scanStatus.className = 'scan-status';
-            
-            // Hentikan scanner sebelumnya jika ada
-            if (barcodeScannerInstance) {
-                Quagga.stop();
-            }
-            
-            Quagga.init({
-                inputStream: {
-                    name: "Live",
-                    type: "LiveStream",
-                    target: barcodeScannerInteractive,
-                    constraints: {
-                        width: 640,
-                        height: 480,
-                        facingMode: "environment" // Gunakan kamera belakang jika tersedia
-                    }
-                },
-                decoder: {
-                    readers: [
-                        "code_128_reader",
-                        "ean_reader",
-                        "ean_8_reader",
-                        "code_39_reader",
-                        "upc_reader",
-                        "upc_e_reader"
-                    ]
-                },
-                locator: {
-                    patchSize: "medium",
-                    halfSample: true
-                },
-                locate: true,
-                numOfWorkers: 4
-            }, function(err) {
-                if (err) {
-                    console.error('Error initializing Quagga:', err);
-                    scanStatus.textContent = 'Error: Tidak dapat mengakses kamera';
-                    scanStatus.className = 'scan-status scan-error';
-                    startBarcodeScannerBtn.style.display = 'block';
-                    barcodeCameraContainer.style.display = 'none';
-                    barcodeCameraControls.style.display = 'none';
-                    return;
+        async function startBarcodeScanner() {
+            try {
+                startBarcodeScannerBtn.style.display = 'none';
+                barcodeCameraContainer.style.display = 'block';
+                barcodeCameraControls.style.display = 'block';
+                scanStatus.style.display = 'block';
+                scanStatus.textContent = 'Mencari kode batang...';
+                scanStatus.className = 'scan-status';
+                scannerResult.style.display = 'none';
+                
+                // Hentikan scanner sebelumnya jika ada
+                if (barcodeScannerInstance) {
+                    barcodeScannerInstance.stop();
                 }
-                console.log('Quagga initialized successfully');
-                Quagga.start();
-                barcodeScannerActive = true;
-                barcodeScannerInstance = Quagga;
-            });
-            
-            Quagga.onDetected(function(result) {
-                if (!barcodeScannerActive) return;
                 
-                const code = result.codeResult.code;
+                // Hentikan kamera sebelumnya
+                stopCameraStream();
                 
-                // Cari produk di gudang berdasarkan kode batang
-                const product = warehouseProducts.find(p => p.barcode === code);
+                // Dapatkan akses ke kamera
+                currentStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: "environment",
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    } 
+                });
                 
-                if (product) {
-                    // Tambahkan produk ke daftar produk hutang
-                    products.push({
-                        name: product.name,
-                        price: product.price
+                barcodeScannerVideo.srcObject = currentStream;
+                
+                // Tunggu hingga video siap
+                barcodeScannerVideo.onloadedmetadata = function() {
+                    // Inisialisasi Quagga setelah video siap
+                    Quagga.init({
+                        inputStream: {
+                            name: "Live",
+                            type: "LiveStream",
+                            target: barcodeScannerVideo,
+                            constraints: {
+                                width: 640,
+                                height: 480,
+                                facingMode: "environment"
+                            }
+                        },
+                        decoder: {
+                            readers: [
+                                "code_128_reader",
+                                "ean_reader",
+                                "ean_8_reader",
+                                "code_39_reader",
+                                "upc_reader",
+                                "upc_e_reader"
+                            ]
+                        },
+                        locator: {
+                            patchSize: "medium",
+                            halfSample: true
+                        },
+                        locate: true,
+                        numOfWorkers: 2
+                    }, function(err) {
+                        if (err) {
+                            console.error('Error initializing Quagga:', err);
+                            scanStatus.textContent = 'Error: Tidak dapat mengakses kamera';
+                            scanStatus.className = 'scan-status scan-error';
+                            startBarcodeScannerBtn.style.display = 'block';
+                            barcodeCameraContainer.style.display = 'none';
+                            barcodeCameraControls.style.display = 'none';
+                            return;
+                        }
+                        console.log('Quagga initialized successfully');
+                        Quagga.start();
+                        barcodeScannerActive = true;
+                        barcodeScannerInstance = Quagga;
                     });
                     
-                    renderProductList(products, productList, removeProduct);
-                    updateTotal(products, totalAmountSpan);
-                    
-                    scanStatus.textContent = `Berhasil menambahkan: ${product.name}`;
-                    scanStatus.className = 'scan-status scan-success';
-                    
-                    // Reset status setelah 3 detik
-                    setTimeout(() => {
-                        scanStatus.textContent = 'Mencari kode batang...';
-                        scanStatus.className = 'scan-status';
-                    }, 3000);
-                } else {
-                    scanStatus.textContent = 'Produk tidak ditemukan di gudang';
-                    scanStatus.className = 'scan-status scan-error';
-                    
-                    // Reset status setelah 3 detik
-                    setTimeout(() => {
-                        scanStatus.textContent = 'Mencari kode batang...';
-                        scanStatus.className = 'scan-status';
-                    }, 3000);
-                }
-            });
+                    Quagga.onDetected(function(result) {
+                        if (!barcodeScannerActive) return;
+                        
+                        const code = result.codeResult.code;
+                        scannedBarcode.textContent = code;
+                        scannerResult.style.display = 'block';
+                        
+                        // Cari produk di gudang berdasarkan kode batang
+                        const product = warehouseProducts.find(p => p.barcode === code);
+                        
+                        if (product) {
+                            // Tambahkan produk ke daftar produk hutang
+                            products.push({
+                                name: product.name,
+                                price: product.price
+                            });
+                            
+                            renderProductList(products, productList, removeProduct);
+                            updateTotal(products, totalAmountSpan);
+                            
+                            scanStatus.textContent = `Berhasil menambahkan: ${product.name}`;
+                            scanStatus.className = 'scan-status scan-success';
+                            
+                            // Reset status setelah 3 detik
+                            setTimeout(() => {
+                                scanStatus.textContent = 'Mencari kode batang...';
+                                scanStatus.className = 'scan-status';
+                                scannerResult.style.display = 'none';
+                            }, 3000);
+                        } else {
+                            scanStatus.textContent = 'Produk tidak ditemukan di gudang';
+                            scanStatus.className = 'scan-status scan-error';
+                            
+                            // Reset status setelah 3 detik
+                            setTimeout(() => {
+                                scanStatus.textContent = 'Mencari kode batang...';
+                                scanStatus.className = 'scan-status';
+                                scannerResult.style.display = 'none';
+                            }, 3000);
+                        }
+                    });
+                };
+            } catch (err) {
+                console.error('Error accessing camera:', err);
+                scanStatus.textContent = 'Error: Tidak dapat mengakses kamera';
+                scanStatus.className = 'scan-status scan-error';
+                startBarcodeScannerBtn.style.display = 'block';
+                barcodeCameraContainer.style.display = 'none';
+                barcodeCameraControls.style.display = 'none';
+            }
         }
         
         // Fungsi untuk menghentikan scanner barcode di tab tambah hutang
@@ -1321,11 +1416,13 @@
                 barcodeScannerInstance.stop();
                 barcodeScannerInstance = null;
             }
+            stopCameraStream();
             
             startBarcodeScannerBtn.style.display = 'block';
             barcodeCameraContainer.style.display = 'none';
             barcodeCameraControls.style.display = 'none';
             scanStatus.style.display = 'none';
+            scannerResult.style.display = 'none';
         }
         
         // Fungsi untuk menampilkan notifikasi
@@ -1489,89 +1586,7 @@
                     }
                     debtorDetails.classList.toggle('expanded');
                 });
-                
-                // Event listener untuk tombol detail peminjam
-                const viewDetailsBtn = debtorGroup.querySelector('.view-debtor-details');
-                viewDetailsBtn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    openDebtorDetailModal(debtorName, debtorDebts);
-                });
-                
-                // Event listener untuk tombol generate dokumen
-                const generateDocBtn = debtorGroup.querySelector('.generate-doc');
-                generateDocBtn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    switchToTab('documents');
-                    selectDebtor(debtorName);
-                    generateContract();
-                });
             });
-        }
-        
-        // Fungsi untuk membuka modal detail peminjam
-        function openDebtorDetailModal(debtorName, debtorDebts) {
-            const totalDebt = calculateTotalDebt(debtorDebts);
-            const unpaidDebts = debtorDebts.filter(debt => !debt.isPaid);
-            const paidDebts = debtorDebts.filter(debt => debt.isPaid);
-            
-            const debtorDetails = document.getElementById('debtor-details');
-            debtorDetails.innerHTML = `
-                <div class="form-group">
-                    <label>Nama Peminjam:</label>
-                    <p><strong>${debtorName}</strong></p>
-                </div>
-                <div class="form-group">
-                    <label>Total Hutang:</label>
-                    <p>Rp ${formatCurrency(totalDebt)}</p>
-                </div>
-                <div class="form-group">
-                    <label>Status:</label>
-                    <p class="debt-status ${unpaidDebts.length > 0 ? 'status-pending' : 'status-paid'}">
-                        ${unpaidDebts.length > 0 ? 'BELUM LUNAS' : 'LUNAS'}
-                    </p>
-                </div>
-                <div class="form-group">
-                    <label>Ringkasan:</label>
-                    <p>${unpaidDebts.length} hutang belum lunas, ${paidDebts.length} hutang lunas</p>
-                </div>
-                <div class="form-group">
-                    <label>Daftar Hutang:</label>
-                    <div class="debt-list">
-                        ${debtorDebts.map(debt => `
-                            <div class="debt-item" style="position: relative;">
-                                <div class="debt-info">
-                                    <div class="debt-date">Tanggal: ${debt.debtDate} ${debt.dueDate ? `| Jatuh Tempo: ${debt.dueDate}` : ''}</div>
-                                    <div class="product-details" style="margin-top: 5px; font-size: 0.85rem; color: #6c757d;">
-                                        <strong>Produk:</strong>
-                                        ${debt.products.map(product => `
-                                            <div>• ${product.name} - Rp ${formatCurrency(product.price)}</div>
-                                        `).join('')}
-                                    </div>
-                                </div>
-                                <div class="debt-amount">Rp ${formatCurrency(debt.debtAmount)}</div>
-                                <div class="debt-status ${debt.isPaid ? 'status-paid' : 'status-pending'}">
-                                    ${debt.isPaid ? 'LUNAS' : 'BELUM LUNAS'}
-                                </div>
-                                ${debt.isPaid ? '<div class="paid-stamp">LUNAS</div>' : ''}
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-                <div class="form-group">
-                    <button class="btn-warning" id="generate-all-docs" data-debtor="${debtorName}">Buat Dokumen untuk Peminjam Ini</button>
-                </div>
-            `;
-            
-            // Event listener untuk tombol buat dokumen
-            document.getElementById('generate-all-docs').addEventListener('click', function() {
-                switchToTab('documents');
-                selectDebtor(debtorName);
-                // Tutup modal detail
-                document.querySelector('.close-modal').click();
-            });
-            
-            // Tampilkan modal
-            document.getElementById('debtor-detail-modal').style.display = 'flex';
         }
         
         // Fungsi untuk mengisi dropdown peminjam
